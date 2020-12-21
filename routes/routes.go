@@ -3,6 +3,7 @@ package routes
 import (
 	"database/sql"
 	"net/http"
+	"time"
 
 	"github.com/araddon/dateparse"
 
@@ -128,15 +129,23 @@ func GetBooking(c echo.Context) error {
 	if room.ID == nil {
 		return c.String(400, "room id required")
 	}
-	var booking []models.Booking
-	rows, err := db.Query("SELECT * FROM booking WHERE roomid = ? ORDER BY datestart", &room.ID)
+	var booking []struct {
+		ID        *int       `json:"id"`
+		DateStart *time.Time `json:"date_start"`
+		DateEnd   *time.Time `json:"date_end"`
+	}
+	rows, err := db.Query("SELECT id, datestart, dateend FROM booking WHERE roomid = ? ORDER BY datestart", &room.ID)
 	if err != nil {
 		return c.String(500, "get rows error")
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var book models.Booking
-		err := rows.Scan(&book)
+		var book struct {
+			ID        *int       `json:"id"`
+			DateStart *time.Time `json:"date_start"`
+			DateEnd   *time.Time `json:"date_end"`
+		}
+		err := rows.Scan(&book.ID, &book.DateStart, &book.DateEnd)
 		if err != nil {
 			return c.String(500, "scan row failed")
 		}
